@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Complaint {
+  id                String          @id @default(cuid())
+  complaintId       String?         @unique
+  title             String
+  description       String
+  type              String?
+  complaintTypeId   Int?
+  status            ComplaintStatus @default(REGISTERED)
+  priority          Priority        @default(MEDIUM)
+  slaStatus         SLAStatus?      @default(ON_TIME)
+  wardId            String?
+  subZoneId         String?
+  area              String?
+  landmark          String?
+  address           String?
+  coordinates       String?
+  latitude          Float?
+  longitude         Float?
+  contactName       String?
+  contactEmail      String?
+  contactPhone      String?
+  isAnonymous       Boolean         @default(false)
+  submittedById     String?
+  assignedToId      String?
+  resolvedById      String?
+  wardOfficerId     String?
+  maintenanceTeamId String?
+  submittedOn       DateTime?       @default(now())
+  assignedOn        DateTime?
+  resolvedOn        DateTime?
+  closedOn          DateTime?
+  deadline          DateTime?
+  remarks           String?
+  citizenFeedback   String?
+  rating            Int?
+  assignToTeam      Boolean         @default(false)
+  tags              String?
+  slmsRef           Int?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  clientId          String?
+  faultSync         FaultSync?      @relation(fields: [slmsRef], references: [id])
+  statusLogs        StatusLog[]
+  complaintType     ComplaintType?  @relation(fields: [complaintTypeId], references: [id])
+
+  @@index([clientId])
+  @@map("complaints")
+}
+
+model StatusLog {
+  id          String    @id @default(cuid())
+  complaintId String
+  userId      String    @map("userId")
+  fromStatus  String?
+  toStatus    String
+  comment     String?
+  timestamp   DateTime  @default(now()) @map("timestamp")
+  createdAt   DateTime  @default(now())
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+
+  @@map("status_logs")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model FaultSync {
+  id         Int         @id @default(autoincrement())
+  rtuNumber  BigInt
+  poleNo     String?
+  sourceType String
+  tagNo      String
+  tagValue   String
+  eventTime    DateTime    @map("event_time")
+  faultCount   Int?        @map("fault_count")
+  totalCount   Int?        @map("total_count")
+  faultPercent Float?      @map("fault_percent")
+  createdAt    DateTime    @default(now())
+  complaints Complaint[]
+
+  @@map("fault_sync")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  type        String?
+  description String?
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@index([key, isActive])
+  @@index([type])
+  @@map("system_config")
+}
+
+model ComplaintType {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String?
+  priority    Priority    @default(MEDIUM)
+  slaHours    Int         @default(48)
+  isActive    Boolean     @default(true)
+  complaints  Complaint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([isActive])
+  @@map("complaint_types")
+}
+
+enum ComplaintStatus {
+  REGISTERED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SLAStatus {
+  ON_TIME
+  WARNING
+  OVERDUE
+  COMPLETED
+}

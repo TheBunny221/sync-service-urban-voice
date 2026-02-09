@@ -1,0 +1,165 @@
+{
+    "service": {
+        "dryRun": false,
+        "isDevelopment": false,
+        "oneTimeCatchUp": false,
+        "systemUserEmail": "system@example.com"
+    },
+    "syncRules": {
+        "batchSize": 5000,
+        "lookbackHours": 48,
+        "clientId": "3",
+        "deduplicationWindowHours": 120,
+        "masterRules": [
+            {
+                "tag": "Tag8",
+                "value": 0,
+                "table": "DIGITALDATA",
+                "description": "Panel Not Communicating",
+                "condition": "equals",
+                "alarmType": "CRITICAL",
+                "complaintType": "Communication Fault",
+                "enabled": true,
+                "priority": 2,
+                "duration": {
+                    "value": "24h",
+                    "mode": "continuous"
+                }
+            },
+            {
+                "tag": "Tag16",
+                "value": 0,
+                "table": "DIGITALDATA",
+                "duration": {
+                    "value": "24h",
+                    "mode": "continuous"
+                },
+                "description": "Power Supply Not Available",
+                "condition": "equals",
+                "alarmType": "MAJOR",
+                "complaintType": "Unavailability of incoming power supply",
+                "enabled": true,
+                "priority": 1
+            }
+        ],
+        "ruleSets": {
+            "diRules": {
+                "enabled": true,
+                "description": "Digital Input Rules (Power, Circuit Trip, Comm Fail)",
+                "rules": [
+                    {
+                        "tag": "Tag7",
+                        "condition": "equals",
+                        "value": 1,
+                        "alarmType": "CRITICAL",
+                        "description": "Circuit 1 Trip",
+                        "complaintType": "Circuit Trip",
+                        "enabled": true,
+                        "thresholdPercent": 80,
+                        "showPre": true,
+                        "prerequisite": {
+                            "tag": "Tag6",
+                            "value": 1,
+                            "table": "ANALOGUEDATA",
+                            "condition": "equals"
+                        }
+                    },
+                    {
+                        "tag": "Tag9",
+                        "condition": "equals",
+                        "value": 1,
+                        "alarmType": "CRITICAL",
+                        "description": "Circuit 2 Trip",
+                        "complaintType": "Circuit Trip",
+                        "enabled": true,
+                        "thresholdPercent": 80,
+                        "prerequisite": {
+                            "tag": "Tag6",
+                            "value": 2,
+                            "table": "ANALOGUEDATA",
+                            "condition": "equals"
+                        },
+                        "showPre": true
+                    }
+                ]
+            },
+            "aiRules": {
+                "enabled": true,
+                "description": "Analog Input Rules (Lamp, Sensor Faults)",
+                "rules": [
+                    {
+                        "tag": "Tag15",
+                        "condition": "gt",
+                        "value": 0,
+                        "alarmType": "WARNING",
+                        "description": "R-Phase Lamp Failure",
+                        "enabled": true,
+                        "complaintType": "Lamp Failure",
+                        "thresholdPercent": 80,
+                        "prerequisite": {
+                            "tag": "Tag1",
+                            "condition": "neq",
+                            "value": 0,
+                            "table": "DIGITALDATA"
+                        }
+                    },
+                    {
+                        "tag": "Tag16",
+                        "condition": "gt",
+                        "value": 0,
+                        "alarmType": "WARNING",
+                        "description": "Y-Phase Lamp Failure",
+                        "enabled": true,
+                        "complaintType": "Lamp Failure",
+                        "thresholdPercent": 80,
+                        "prerequisite": {
+                            "tag": "Tag2",
+                            "condition": "neq",
+                            "value": 0,
+                            "table": "DIGITALDATA"
+                        }
+                    },
+                    {
+                        "tag": "Tag17",
+                        "condition": "gt",
+                        "value": 0,
+                        "alarmType": "WARNING",
+                        "description": "B-Phase Lamp Failure",
+                        "enabled": true,
+                        "complaintType": "Lamp Failure",
+                        "thresholdPercent": 80,
+                        "prerequisite": {
+                            "tag": "Tag3",
+                            "condition": "neq",
+                            "value": 0,
+                            "table": "DIGITALDATA"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "cmsMapping": {
+        "defaultPriority": "HIGH",
+        "defaultStatus": "REGISTERED",
+        "defaults": {
+            "wardId": null,
+            "subZoneId": null,
+            "submittedById": "cml6p0j8w002y3l5nwh2fadf0",
+            "contactPhone": "NA",
+            "contactName": "System Agent",
+            "contactEmail": "sync@fixsmart.dev",
+            "area": "N/A",
+            "address": "N/A",
+            "slaStatus": "ON_TIME",
+            "isAnonymous": false,
+            "assignToTeam": false
+        },
+        "titleTemplate": "Fault Captured: {{Description}} ({{TagNumber}})",
+        "descriptionTemplate": "Fault Identified: {{Description}} ({{TagNumber}}) — Logged at {{EventTime}}"
+    },
+    "errorHandling": {
+        "retryCount": 3,
+        "retryDelayMs": 5000
+    }
+}
