@@ -1,7 +1,7 @@
 
 import sql from 'mssql';
-import { getConfig } from '../logic/configLoader.js';
-import { getLogger } from '../utils/logger.js';
+import { getConfig } from '../config/configLoader.js';
+import { v2Logger as logger } from '../logger.js';
 import { connectToSourceDb } from './mssql.js';
 
 /**
@@ -11,7 +11,6 @@ import { connectToSourceDb } from './mssql.js';
 export async function fetchJoinedDataStream(sinceDate, handlers) {
     const { onRow, onEnd, onError } = handlers;
     const config = getConfig();
-    const logger = getLogger();
     const pool = await connectToSourceDb();
 
     const digitalTable = `DigitalData${config.syncRules.clientId}`;
@@ -110,6 +109,7 @@ export async function fetchCommFaults() {
         WHERE d.Tag8 = 0
         GROUP BY d.RTUNUMBER
         HAVING MAX(d.DateTimeField) <= DATEADD(HOUR, -1, GETDATE())
+        AND MAX(d.DateTimeField) >= DATEADD(HOUR, -1440, GETDATE()) -- Filter out discontinued RTUs (>60 days inactive)
         AND NOT EXISTS (
             SELECT 1 
             FROM dbo.[${analogTable}] a

@@ -1,57 +1,145 @@
 
-import { loadConfig, getConfig } from './logic/configLoader.js';
-import { initLogger, getLogger } from './utils/logger.js';
-import { startScheduler } from './scheduler.js';
+import cron from 'node-cron';
+import { StateManager } from './stateManager.js';
+import { RuleEngine } from './ruleEngine.js';
+import { v2Logger, logV2Payload } from './logger.js';
+import { loadConfig, getConfig } from './config/configLoader.js';
 import { connectToSourceDb } from './db/mssql.js';
-import { getPrismaClient, disconnectPrisma } from './db/prisma.js';
 
-async function main() {
-    // 1. Load Config
-    loadConfig();
+// V2 Imports
+import prisma from './prismaClient.js';
+import { mapToCmsPayload } from './cmsMapper.js';
+import { payloadLogger } from './payloadLogger.js';
 
-    // 2. Init Logger
-    const logger = initLogger();
+// Load Env
+loadConfig();
+const config = getConfig();
 
-    logger.info('Starting AlarmToComplaintSyncAgent...');
+const stateManager = new StateManager();
+const ruleEngine = new RuleEngine();
 
-    // 3. Test Connections (Optional fail-fast)
+let isRunning = false;
+
+// Retrieve schedule from ENV or Config, default to 5 min
+const SCHEDULE_CRON = process.env.SYNC_INTERVAL_MIN ? `*/${process.env.SYNC_INTERVAL_MIN} * * * *` : (config.service.schedule || '*/5 * * * *');
+const IS_DEV = process.env.IS_DEVELOPMENT === 'true' || config.service.isDevelopment;
+
+async function runSync() {
+    if (isRunning) {
+        v2Logger.warn('Sync Job skipped - Previous run still in progress.');
+        return;
+    }
+    isRunning = true;
+
+    try {
+        v2Logger.info('--- Starting V2 Sync Job ---');
+
+        // 1. Get Since Date
+        const sinceDate = await stateManager.getLastSyncTime();
+        v2Logger.info(`Sync Window Start: ${sinceDate.toISOString()}`);
+
+        // 2. Run Rule Engine
+        const faults = await ruleEngine.run(sinceDate);
+
+        // 3. Process Faults -> CMS Payloads
+        v2Logger.info(`Generated ${faults.length} actionable complaints.`); // faults are the raw objects from rule engine
+
+        for (const fault of faults) {
+            logV2Payload(fault); // Keep internal logging
+
+            if (IS_DEV) {
+                // DEV MODE: Log to File
+                // Pass 'prisma' client as tx to allow read-only lookups for ID generation
+                try {
+                    const cmsPayload = await mapToCmsPayload(fault, prisma);
+                    payloadLogger.log(cmsPayload);
+                    v2Logger.info(`[DEV] Logged Payload for RTU ${fault.rtuNumber} to file.`);
+                } catch (err) {
+                    v2Logger.error(`[DEV] Failed to map payload for RTU ${fault.rtuNumber}`, err);
+                }
+            } else {
+                // PROD MODE: Insert into DB
+                await persistToDatabase(fault);
+            }
+        }
+
+        // 4. Update State
+        await stateManager.updateLastSyncTime(new Date());
+
+        v2Logger.info('--- V2 Sync Job Completed ---');
+
+    } catch (error) {
+        v2Logger.error('Sync Job Failed', error);
+    } finally {
+        isRunning = false;
+    }
+}
+
+async function persistToDatabase(fault) {
+    try {
+        // Transaction: FaultSync -> Complaint
+        await prisma.$transaction(async (tx) => {
+            // 1. Check Previous Active Complaint (Smart Loop)
+            const existing = await tx.complaint.findFirst({
+                where: {
+                    tags: { contains: `"rtuId":${fault.rtuNumber}` },
+                    status: { notIn: ['RESOLVED', 'CLOSED'] }
+                }
+            });
+
+            if (existing) {
+                v2Logger.warn(`Skipping Complaint for RTU ${fault.rtuNumber}: Active complaint ${existing.complaintId} exists.`);
+                return;
+            }
+
+            // 2. Insert FaultSync
+            const faultRecord = await tx.faultSync.create({
+                data: {
+                    rtuNumber: BigInt(fault.rtuNumber),
+                    tagNo: fault.tag,
+                    tagValue: String(fault.value || fault.val || 0), // Handle value/val mismatch if any
+                    eventTime: new Date(fault.detectedAt || fault.time),
+                    sourceType: 'V2_SYNC_SERVICE',
+                }
+            });
+
+            // 3. Generate Payload INSIDE Transaction (to get compliant ID locked in tx if needed)
+            const cmsPayload = await mapToCmsPayload(fault, tx);
+
+            // 4. Insert Complaint
+            await tx.complaint.create({
+                data: {
+                    ...cmsPayload, // Spread mapped fields
+                    slmsRef: faultRecord.id, // Link to FaultSync
+                    meta: undefined, // Remove convenience field
+                    source: undefined,
+                }
+            });
+
+            v2Logger.info(`Persisted Complaint for RTU ${fault.rtuNumber} [ID: ${cmsPayload.complaintId}]`);
+        });
+
+    } catch (e) {
+        v2Logger.error(`DB Insert Failed for RTU ${fault.rtuNumber}`, e);
+    }
+}
+
+
+(async () => {
     try {
         await connectToSourceDb();
 
-        // Check Prisma connection
-        const prisma = getPrismaClient();
-        // Simple check (won't work if DB doesn't exist yet, but client connects lazily usually)
-        // await prisma.$connect(); 
-
-        logger.info('Database connections initialized.');
-    } catch (err) {
-        logger.error('Startup connectivity check failed', err);
-        // decide if we exit or keep retrying. 
-        // process.exit(1); 
+        if (IS_DEV || process.env.FORCE_RUN === 'true') {
+            v2Logger.info(`Mode: ${IS_DEV ? 'DEV' : 'PROD (Forced Run)'}. Running immediately.`);
+            await runSync();
+        } else {
+            v2Logger.info(`Starting Scheduler: ${SCHEDULE_CRON}`);
+            cron.schedule(SCHEDULE_CRON, async () => {
+                await runSync();
+            });
+        }
+    } catch (e) {
+        v2Logger.error('Startup Error', e);
+        process.exit(1);
     }
-
-    // 4. Start Scheduler
-    startScheduler();
-
-    // In Dev Mode, run immediately to allow verification without waiting for Cron
-    if (loadConfig().service.isDevelopment) {
-        logger.info('Dev Mode detected. Running Sync Job immediately...');
-        const { runV2SyncJob } = await import('./v2/syncJob.js');
-        await runV2SyncJob();
-    }
-
-    // Handle graceful shutdown
-    const shutdown = async () => {
-        logger.info('Shutting down...');
-        await disconnectPrisma();
-        process.exit(0);
-    };
-
-    process.on('SIGINT', shutdown);
-    process.on('SIGTERM', shutdown);
-}
-
-main().catch(err => {
-    console.error('Fatal startup error:', err);
-    process.exit(1);
-});
+})();

@@ -1,39 +1,33 @@
 # 03. Modules Reference
 
-This document outlines the responsibility of each source file.
+This document outlines the responsibility of each source file in the promoted V2 structure.
 
-## Root Directory
-- **`index.js`**: Application Entry Point.
-  - Initializes `configLoader`.
-  - Sets up the `winston` logger.
-  - Validates DB connections on startup.
-  - Starts the `node-cron` scheduler.
-- **`sync-config.json`**: Central configuration file (moved to root in v2.0).
+## Entry Point
+- **`src/index.js`**: Core Orchestrator.
+  - Controls the execution flow for development vs production modes.
+  - Manages the interaction between `StateManager` and `RuleEngine`.
 
-## Core Logic (`src/logic/`)
-- **`configLoader.js`**: 
-  - Loads `sync-config.json`.
-  - Validates schema using `zod`.
-  - Provides a global `getConfig()` accessor.
-- **`dataProcessor.js`**: 
-  - **Normalization**: Handles the "Unpivot" logic. Iterates `Tag1` to `Tag64` for each row and emits normalized objects.
-- **`ruleEngine.js`**: 
-  - **Evaluation**: Compares normalized values against configured thresholds. Handles `gt`, `lt`, `equals`, `neq`, etc.
-- **`dedupEngine.js`** (Vital): 
-  - **Smart Dedup**: Checks if an active complaint exists for the given RTU/Tag.
-  - Returns `true` if operation should be skipped.
-- **`mapper.js`**: 
-  - **Transformation**: Maps a `{DataPoint, Rule}` pair into the Prisma `Complaint` data structure, filling in templates.
+## Detection Services (`src/services/`)
+- **`powerFail.service.js`**: Specific detector for RTU Power Loss (Tag16).
+- **`commFail.service.js`**: Complex detector for communication timeouts based on data staleness.
+- **`trip.service.js`**: Monitors Digital Inputs for circuit/mcb trips.
+- **`lampFailure.service.js`**: Advanced detector for partial and total lamp failures using phase status awareness.
+
+## Core Services (`src/`)
+- **`ruleEngine.js`**: Dispatches fault detection requests to specialized services and applies "Winner-Take-All" logic.
+- **`stateManager.js`**: Handles local state tracking and remote deduplication against the CMS.
+- **`cmsMapper.js`**: Logic for transforming raw faults into CMS-compliant complaint payloads.
+- **`payloadLogger.js`**: Utility for saving generated payloads to local JSON files in development mode.
+- **`logger.js`**: Centralized V2 logging using `winston`.
+- **`prismaClient.js`**: Prisma ORM client instance.
+
+## Configuration (`src/config/`)
+- **`configLoader.js`**: Loads and validates `v2-config.json` and `.env`.
+- **`v2-config.json`**: Primary JSON configuration for V2 rules and mappings.
 
 ## Database (`src/db/`)
-- **`mssql.js`**: 
-  - SQL Server connection pool.
-  - Specific query functions for `AnalogData3` and `DigitalData3`.
-- **`prisma.js`**: 
-  - Singleton `PrismaClient` instance for PostgreSQL interactions.
+- **`mssql.js`**: SQL Server driver and specific analytical queries for V2.
+- **`prisma.js`**: Singleton management for the target PostgreSQL connection.
 
-## Utilities (`src/utils/`)
-- **`logger.js`**: 
-  - Wraps `winston`.
-  - `logRawData(type, data)`: Handles high-volume raw logging.
-  - `logSkipped(data)`: Handles structured logging for skipped/duplicate faults.
+## Legacy Code (`/legacy-code/`)
+- Contains the original V1 (stream-based) implementation for historical reference or emergency rollback.

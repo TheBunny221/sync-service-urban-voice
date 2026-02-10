@@ -1,0 +1,38 @@
+{
+    "service": {
+        "dryRun": false,
+        "isDevelopment": false,
+        "oneTimeCatchUp": false,
+        "systemUserEmail": "system@example.com"
+    },
+    "syncRules": {
+        "batchSize": 5000,
+        "lookbackHours": 48,
+        "clientId": "3",
+        "deduplicationWindowHours": 120
+    },
+    "cmsMapping": {
+        "defaultPriority": "HIGH",
+        "defaultStatus": "REGISTERED",
+        "defaults": {
+            "submittedById": "cmlg94vq900513lzts6406r7i",
+            "slaStatus": "ON_TIME",
+            "isAnonymous": false,
+            "contactPhone": "9876543210"
+        },
+        "complaintTypeMap": {
+            "POWER_FAIL": "Unavailability of incoming power supply",
+            "COMMUNICATION_FAIL": "Panel Not communicating",
+            "SINGLE_PHASE_TRIP": "Circuit Trip",
+            "THREE_PHASE_TRIP": "Circuit Trip",
+            "LAMP_FAILURE": "Lamp Failures"
+        }
+    },
+    "sourceDb": {
+        "options": {
+            "requestTimeout": 90000,
+            "encrypt": false,
+            "enableArithAbort": true
+        }
+    }
+}

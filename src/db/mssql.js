@@ -1,13 +1,12 @@
 
 import sql from 'mssql';
-import { getConfig } from '../logic/configLoader.js';
-import { getLogger } from '../utils/logger.js';
+import { getConfig } from '../config/configLoader.js';
+import { v2Logger as logger } from '../logger.js';
 
 let pool = null;
 
 export async function connectToSourceDb() {
     const config = getConfig();
-    const logger = getLogger();
 
     try {
         if (!pool) {
@@ -30,7 +29,6 @@ export async function connectToSourceDb() {
 
 async function fetchData(tableName, lastSyncTime) {
     const config = getConfig();
-    const logger = getLogger();
     const pool = await connectToSourceDb();
 
     const lookbackDate = lastSyncTime || new Date(Date.now() - config.syncRules.lookbackHours * 60 * 60 * 1000);
@@ -66,7 +64,6 @@ export async function fetchAnalogData(lastSyncTime) {
 
 export async function fetchDigitalData(lastSyncTime) {
     const config = getConfig();
-    const logger = getLogger();
     const pool = await connectToSourceDb();
 
     const tableName = `DigitalData${config.syncRules.clientId}`;
@@ -102,7 +99,6 @@ export async function fetchDigitalData(lastSyncTime) {
 
 export async function checkSignalPersistence(rtuId, tag, value, durationMs, sourceType) {
     const config = getConfig();
-    const logger = getLogger();
     const pool = await connectToSourceDb();
 
     // Determine Table Name
@@ -151,7 +147,6 @@ export async function checkSignalPersistence(rtuId, tag, value, durationMs, sour
  */
 export async function fetchHistory(rtuIds, windowHours, sourceType) {
     const config = getConfig();
-    const logger = getLogger();
     const pool = await connectToSourceDb();
 
     if (!rtuIds || rtuIds.length === 0) return [];

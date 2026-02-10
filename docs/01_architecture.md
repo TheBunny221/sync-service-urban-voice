@@ -10,12 +10,14 @@ graph TD
     end
 
     subgraph Service_Layer [Sync Agent: Node.js]
-        Reader[DB Reader]
-        Logger1[Raw Data Logger]
-        Norm[Data Normalizer]
+        Reader[Optimized DB Reader]
+        PowerSvc[Power Fail Service]
+        CommSvc[Comm Fail Service]
+        TripSvc[Trip Service]
+        LampSvc[Lamp Fail Service]
         Rules[Rule Engine]
-        Dedup[Smart Dedup Engine]
-        Logger2[Skipped Fault Logger]
+        StateManager[State Manager]
+        Mapper[CMS Payload Mapper]
     end
 
     subgraph IT_Layer [Target: PostgreSQL]
@@ -25,33 +27,38 @@ graph TD
 
     AD --> Reader
     DD --> Reader
-    Reader --> Logger1
-    Logger1 --> Norm
-    Norm --> Rules
-    Rules -- Match --> Dedup
-    Dedup -- Active Complaint? --> Logger2
-    Dedup -- No Active Complaint --> FS
-    FS -- 1:N Link --> C
+    Reader --> PowerSvc
+    Reader --> CommSvc
+    Reader --> TripSvc
+    Reader --> LampSvc
+    
+    PowerSvc --> Rules
+    CommSvc --> Rules
+    TripSvc --> Rules
+    LampSvc --> Rules
+    
+    Rules -- Winner-Take-All --> StateManager
+    StateManager -- New Fault? --> Mapper
+    Mapper -- Transaction --> IT_Layer
 ```
 
-## Data Flow Pipeline
+## Data Flow Pipeline (V2 Optimized)
 
-1. **Polling Cycle**: The service wakes up on a configurable Cron schedule (e.g., `*/5 * * * *`).
+1. **Polling Cycle**: The service wakes up on a configurable Cron schedule (e.g., `*/1 * * * *`).
 2. **Data Fetching**:
    - Connects to SQL Server.
-   - Queries `AnalogData3` and `DigitalData3` for records newer than the `lastSyncTime`.
-3. **Forensic Logging**:
-   - Immediately writes fetched rows to `./log/raw_data_[TYPE]_[DATE].log`.
-   - This ensures data is preserved even if processing fails later.
-4. **Normalization**:
-   - Converts the "wide" SQL table format (columns `Tag1`...`Tag64`) into a normalized stream of Data Points: `{ RTU, Tag, Value, Time }`.
-5. **Rule Evaluation**:
-   - Each Data Point is checked against `sync-config.json`.
-   - If a rule matches (e.g., `Value > Threshold`), it is flagged as a **Fault**.
-6. **Smart Deduplication**:
-   - **Check**: Queries `FaultSync` for the latest entry regarding this `RTU + Tag`.
-   - **Status Validation**: If a `FaultSync` exists, it checks the linked `Complaint`.
-     - **OPEN/IN_PROGRESS**: The new fault is considered a duplicate. It is **skipped** and logged to `./log/skipped_faults_[DATE].log`.
-     - **CLOSED/RESOLVED**: The new fault is considered a recurrence. A **new** `FaultSync` and `Complaint` are created.
-7. **Persistence**:
-   - **Transaction**: Both `FaultSync` and `Complaint` are inserted in a single database transaction to ensure integrity.
+   - **Power Failures**: Scans `DigitalData` for `Tag16=0` in the last hour.
+   - **Comm Failures**: Analytical query checking for stale digital data (>1h) and missing analog data (>24h).
+   - **Circuit Trips / Lamp Failures**: Queries for newer records since the last processed timestamp.
+3. **Rule Evaluation (Tiered Logic)**:
+   - Evaluates detections through specialized services (`powerFail.service`, `commFail.service`, etc.).
+   - **Winner-Take-All**: For a single RTU, only the most critical fault is promoted:
+     - `Power Fail` > `Comm Fail` > `Trip` > `Lamp Fail`.
+4. **State Management**:
+   - **Deduplication**: Checks against local and remote state to ensure only *new* state changes trigger complaints.
+   - Faults are only promoted if the device has transitioned from "Normal" to "Faulty".
+5. **CMS Mapping**:
+   - `src/cmsMapper.js` transforms normalized fault data into the specific PostgreSQL schema required by the CMS.
+   - Resolves `complaintTypeId` and `complaintId` prefixing based on system configuration.
+6. **Persistence**:
+   - **Transaction**: Inserts are wrapped in Prisma transactions to ensure data consistency between operational logs and complaint tickets.

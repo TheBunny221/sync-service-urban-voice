@@ -155,11 +155,25 @@
             "isAnonymous": false,
             "assignToTeam": false
         },
+        "complaintTypeMap": {
+            "POWER_FAIL": "Unavailability of incoming power supply",
+            "COMMUNICATION_FAIL": "Communication Fault",
+            "SINGLE_PHASE_TRIP": "Circuit Trip",
+            "THREE_PHASE_TRIP": "Circuit Trip",
+            "LAMP_FAILURE": "Lamp Failure"
+        },
         "titleTemplate": "Fault Captured: {{Description}} ({{TagNumber}})",
         "descriptionTemplate": "Fault Identified: {{Description}} ({{TagNumber}}) — Logged at {{EventTime}}"
     },
     "errorHandling": {
         "retryCount": 3,
         "retryDelayMs": 5000
+    },
+    "sourceDb": {
+        "options": {
+            "requestTimeout": 90000,
+            "encrypt": false,
+            "enableArithAbort": true
+        }
     }
 }

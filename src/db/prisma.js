@@ -1,6 +1,6 @@
 
 import { PrismaClient } from '@prisma/client';
-import { getConfig } from '../logic/configLoader.js';
+import { getConfig } from '../config/configLoader.js';
 
 let prisma = null;
 

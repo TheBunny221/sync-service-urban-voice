@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js",
-    "start-ui": "node src/ui/server.js",
-    "start:v2": "cross-env IS_DEVELOPMENT=true node src/index.js",
+    "start:prod": "cross-env IS_DEVELOPMENT=false node src/index.js",
+    "start:dev": "cross-env IS_DEVELOPMENT=true node src/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },

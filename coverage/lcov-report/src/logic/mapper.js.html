@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.36% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>19/22</span>
+                <span class='fraction'>0/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.93% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>51/58</span>
+                <span class='fraction'>0/58</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -142,30 +142,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -174,11 +170,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -216,28 +216,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
 import { getConfig } from '../logic/configLoader.js';
 &nbsp;
-function formatString(template, values) {
-    return template.replace(/\{\{(\w+)\}\}/g, (_, key) =&gt; values[key] || <span class="branch-1 cbranch-no" title="branch not covered" >'')</span>;
+function <span class="fstat-no" title="function not covered" >formatString(</span>template, values) {
+<span class="cstat-no" title="statement not covered" >    return template.replace(/\{\{(\w+)\}\}/g, <span class="fstat-no" title="function not covered" >(_</span>, key) =&gt; <span class="cstat-no" title="statement not covered" >values[key] || '')</span>;</span>
 }
 &nbsp;
-function mapPriority(alarmType) {
-    if (!alarmType) return null;
-    const type = alarmType.toUpperCase();
-    if (type === 'CRITICAL') return 'CRITICAL';
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (type === 'MAJOR') <span class="cstat-no" title="statement not covered" >return 'HIGH';</span>
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (type === 'MINOR' || type === 'WARN' || type === 'WARNING') <span class="cstat-no" title="statement not covered" >return 'MEDIUM';</span>
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (type === 'INFO' || type === 'STATUS' || type === 'LOW') <span class="cstat-no" title="statement not covered" >return 'LOW';</span>
-    return null; // Fallback to default
+function <span class="fstat-no" title="function not covered" >mapPriority(</span>alarmType) {
+<span class="cstat-no" title="statement not covered" >    if (!alarmType) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+    const type = <span class="cstat-no" title="statement not covered" >alarmType.toUpperCase();</span>
+<span class="cstat-no" title="statement not covered" >    if (type === 'CRITICAL') <span class="cstat-no" title="statement not covered" >return 'CRITICAL';</span></span>
+<span class="cstat-no" title="statement not covered" >    if (type === 'MAJOR') <span class="cstat-no" title="statement not covered" >return 'HIGH';</span></span>
+<span class="cstat-no" title="statement not covered" >    if (type === 'MINOR' || type === 'WARN' || type === 'WARNING') <span class="cstat-no" title="statement not covered" >return 'MEDIUM';</span></span>
+<span class="cstat-no" title="statement not covered" >    if (type === 'INFO' || type === 'STATUS' || type === 'LOW') <span class="cstat-no" title="statement not covered" >return 'LOW';</span></span>
+<span class="cstat-no" title="statement not covered" >    return null; </span>// Fallback to default
 }
 &nbsp;
-export function mapToComplaint(dataPoint, rule, overrides = {}) {
-    const config = getConfig();
-    const mapping = config.cmsMapping;
-    const defaults = mapping.defaults || {};
+export function <span class="fstat-no" title="function not covered" >mapToComplaint(</span>dataPoint, rule, overrides = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+    const config = <span class="cstat-no" title="statement not covered" >getConfig();</span>
+    const mapping = <span class="cstat-no" title="statement not covered" >config.cmsMapping;</span>
+    const defaults = <span class="cstat-no" title="statement not covered" >mapping.defaults || {};</span>
 &nbsp;
     // Prepare values for templates
-    const values = {
-        Description: rule.description || <span class="branch-1 cbranch-no" title="branch not covered" >'Fault Detected',</span>
+    const values = <span class="cstat-no" title="statement not covered" >{</span>
+        Description: rule.description || 'Fault Detected',
         TagNumber: dataPoint.tag,
         AlarmType: rule.alarmType || 'GENERAL',
         // AlarmTime removed from description as per CMS requirement
@@ -249,11 +249,11 @@ export function mapToComplaint(dataPoint, rule, overrides = {}) {
         Percent: rule.stats?.percent || '0.00'
     };
 &nbsp;
-    const title = formatString(mapping.titleTemplate, values);
-    const description = formatString(mapping.descriptionTemplate, values);
-    const now = new Date(); // Local processing time for submittedOn
+    const title = <span class="cstat-no" title="statement not covered" >formatString(mapping.titleTemplate, values);</span>
+    const description = <span class="cstat-no" title="statement not covered" >formatString(mapping.descriptionTemplate, values);</span>
+    const now = <span class="cstat-no" title="statement not covered" >new Date();</span> // Local processing time for submittedOn
 &nbsp;
-    return {
+<span class="cstat-no" title="statement not covered" >    return {</span>
         // Core Fields
         title,
         description,
@@ -265,8 +265,8 @@ export function mapToComplaint(dataPoint, rule, overrides = {}) {
         type: rule.complaintType || 'Street Lighting',
         complaintTypeId: null, // We intentionally do not link ID to avoid DB dependency issues
         slaStatus: defaults.slaStatus || 'ON_TIME',
-        isAnonymous: typeof defaults.isAnonymous === 'boolean' ? <span class="branch-0 cbranch-no" title="branch not covered" >defaults.isAnonymous </span>: false,
-        assignToTeam: typeof defaults.assignToTeam === 'boolean' ? <span class="branch-0 cbranch-no" title="branch not covered" >defaults.assignToTeam </span>: false,
+        isAnonymous: typeof defaults.isAnonymous === 'boolean' ? defaults.isAnonymous : false,
+        assignToTeam: typeof defaults.assignToTeam === 'boolean' ? defaults.assignToTeam : false,
         submittedOn: now, // Urban Voice standard: submission time is now
         contactPhone: overrides.contactPhone || defaults.contactPhone || null,
         contactName: defaults.contactName || null,
@@ -295,7 +295,7 @@ export function mapToComplaint(dataPoint, rule, overrides = {}) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-07T08:01:16.145Z
+                at 2026-02-10T09:29:07.855Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

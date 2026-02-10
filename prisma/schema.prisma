@@ -8,51 +8,63 @@ datasource db {
 }
 
 model Complaint {
-  id                String          @id @default(cuid())
-  complaintId       String?         @unique
-  title             String
-  description       String
-  type              String?
-  complaintTypeId   Int?
-  status            ComplaintStatus @default(REGISTERED)
-  priority          Priority        @default(MEDIUM)
-  slaStatus         SLAStatus?      @default(ON_TIME)
-  wardId            String?
-  subZoneId         String?
-  area              String?
-  landmark          String?
-  address           String?
-  coordinates       String?
-  latitude          Float?
-  longitude         Float?
-  contactName       String?
-  contactEmail      String?
-  contactPhone      String?
-  isAnonymous       Boolean         @default(false)
-  submittedById     String?
-  assignedToId      String?
-  resolvedById      String?
-  wardOfficerId     String?
-  maintenanceTeamId String?
-  submittedOn       DateTime?       @default(now())
-  assignedOn        DateTime?
-  resolvedOn        DateTime?
-  closedOn          DateTime?
-  deadline          DateTime?
-  remarks           String?
-  citizenFeedback   String?
-  rating            Int?
-  assignToTeam      Boolean         @default(false)
-  tags              String?
-  slmsRef           Int?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  clientId          String?
-  faultSync         FaultSync?      @relation(fields: [slmsRef], references: [id])
-  statusLogs        StatusLog[]
-  complaintType     ComplaintType?  @relation(fields: [complaintTypeId], references: [id])
+  id              String          @id @default(cuid())
+  complaintId     String?         @unique // Human-readable complaint ID like KSC0001
+  title           String?
+  description     String
+  // Legacy string type retained for backward compatibility
+  type            String?
+  complaintTypeId Int?
+  status          ComplaintStatus @default(REGISTERED)
+  priority        Priority        @default(MEDIUM)
+  slaStatus       SLAStatus       @default(ON_TIME)
 
-  @@index([clientId])
+  // Location Information
+  wardId      String?
+  subZoneId   String?
+  area        String?
+  landmark    String?
+  address     String?
+  coordinates String? // JSON string for lat/lng
+  latitude    Float? // Explicit latitude field
+  longitude   Float? // Explicit longitude field
+
+  // Contact Information
+  contactName  String?
+  contactEmail String?
+  contactPhone String
+  isAnonymous  Boolean @default(false)
+
+  // Assignment and Tracking
+  submittedById     String?
+  assignedToId      String? // Generic assignment field (kept for backward compatibility)
+  resolvedById      String?
+  wardOfficerId     String? // Automatically assigned ward officer
+  maintenanceTeamId String? // Assigned maintenance team member
+
+  // Timestamps
+  submittedOn DateTime  @default(now())
+  assignedOn  DateTime?
+  resolvedOn  DateTime?
+  closedOn    DateTime?
+  deadline    DateTime?
+
+  // Additional Information
+  remarks         String?
+  citizenFeedback String?
+  rating          Int? // 1-5 rating
+  assignToTeam    Boolean @default(false) // Team assignment flag
+  tags            String? // JSON array of tags
+  slmsRef         Int?
+  faultSync       FaultSync? @relation(fields: [slmsRef], references: [id])
+
+  // Relations - Only active models
+  statusLogs      StatusLog[]
+  complaintType   ComplaintType? @relation(fields: [complaintTypeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("complaints")
 }
 
@@ -73,7 +85,7 @@ model StatusLog {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  fullName  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -81,17 +93,15 @@ model User {
 }
 
 model FaultSync {
-  id         Int         @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   rtuNumber  BigInt
   poleNo     String?
   sourceType String
   tagNo      String
   tagValue   String
-  eventTime    DateTime    @map("event_time")
-  faultCount   Int?        @map("fault_count")
-  totalCount   Int?        @map("total_count")
-  faultPercent Float?      @map("fault_percent")
-  createdAt    DateTime    @default(now())
+  eventTime  DateTime @map("event_time")
+  createdAt  DateTime @default(now())
+
   complaints Complaint[]
 
   @@map("fault_sync")
