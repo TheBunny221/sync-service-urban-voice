@@ -6,6 +6,7 @@ The `cmsIntegration.js` file contains highly specialized logic required to remai
 ## Responsibilities
 - **Sequential ID Generation**: Implements the algorithm for incrementing alpha-numeric complaint IDs (e.g., `KSC0001` -> `KSC0002`).
 - **Dynamic Category Resolution**: Resolves human-readable complaint names into internal database IDs, supporting both modern table lookups and legacy configuration fallbacks.
+- **System User Resolution**: Fetches the internal database ID for the service's system user via email.
 - **SLA Inheritance**: Extracts the `slaHours` for a given type to help the mapper calculate the resolution deadline.
 
 ## Flow Explanation
@@ -17,6 +18,9 @@ The `cmsIntegration.js` file contains highly specialized logic required to remai
     - Takes a string input (e.g., "Lamp Failure").
     - Searches the `ComplaintType` table.
     - If not found, scans the `SystemConfig` table for JSON definitions starting with `COMPLAINT_TYPE_`.
+3.  **User Resolution**:
+    - Takes an email string.
+    - Queries the `User` table for a matching ID.
 
 ## Mermaid ID Generation Flow
 ```mermaid
@@ -35,6 +39,7 @@ flowchart TD
 ## Method-Level Explanation
 - `generateComplaintId(tx)`: Performs the sequential increment logic. Requires a Prisma transaction `tx` to ensure consistency.
 - `resolveComplaintType(tx, typeInput)`: Handles the multi-layered lookup logic for complaint categories.
+- `resolveSystemUser(tx, email)`: Dynamically fetches the internal User ID for the system agent.
 
 ## Input / Output Contracts
 - **Input**: Prisma transaction client and string/number identifiers.

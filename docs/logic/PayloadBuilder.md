@@ -5,7 +5,7 @@ The `Payload Builder` is a simple utility that converts the raw output of detect
 
 ## Responsibilities
 - **Type Casting**: Ensures RTU IDs are numbers and timestamps are in ISO format.
-- **Defaulting**: Provides fallback descriptions and percentage values (e.g., 100% for binary faults).
+- **Defaulting**: Provides fallback descriptions and calculates `failurePercent` (Default 100% for binary/system faults, actual percentage for lamp failures).
 - **Metadata Tagging**: Preserves the original `tag` and `value` for debugging.
 
 ## Flow Explanation
@@ -31,7 +31,7 @@ flowchart LR
       "panelName": "RTU-123",
       "faultType": "...",
       "description": "...",
-      "failurePercent": 100,
+      "failurePercent": "Number (100 for binary, rounded % for lamp)",
       "detectedAt": "ISO Date",
       "tag": "TagX",
       "value": 1

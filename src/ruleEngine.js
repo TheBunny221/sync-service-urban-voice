@@ -74,6 +74,15 @@ export class RuleEngine {
             });
         }
 
+        // 4. Summarize and Return
+        const summary = finalPayloads.reduce((acc, p) => {
+            acc[p.faultType] = (acc[p.faultType] || 0) + 1;
+            return acc;
+        }, {});
+
+        v2Logger.info(`Actionable Summary: ${JSON.stringify(summary)}`);
+        v2Logger.info(`Generated ${finalPayloads.length} actionable complaints.`);
+
         return finalPayloads;
     }
 }

@@ -70,7 +70,8 @@ export class LampFailureService {
                     }
                 }
 
-                const percent = (faulty * 100) / total;
+                let percent = (faulty * 100) / total;
+                if (percent > 100) percent = 100; // Cap at 100%
 
                 if (percent > 0) {
                     faults.push({

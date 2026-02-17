@@ -15,8 +15,8 @@ The `v2-config.json` file contains all the persistent, non-secret configuration 
 | `service` | `oneTimeCatchUp` | If true, the system ignores its saved state and performs a full lookback on startup. |
 | `syncRules` | `clientId` | Determines which Source SQL tables to query (e.g., `DigitalData3`). |
 | `syncRules` | `lookbackHours` | The maximum window to search for faults in the source database. |
+| `service` | `systemUserEmail` | The email of the system user in PostgreSQL that will "own" all sync complaints. Resolved to an ID at runtime. |
 | `cmsMapping` | `complaintTypeMap` | Maps internal codes (`POWER_FAIL`) to names used in the CMS database. |
-| `cmsMapping` | `defaults.submittedById` | The technical User ID in PostgreSQL that will "own" all system-generated complaints. |
 
 ## Mermaid Config Mapping
 ```mermaid

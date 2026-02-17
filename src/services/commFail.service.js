@@ -11,10 +11,9 @@ export class CommFailService {
     /**
      * Detects Communication Failures.
      * Logic:
-     * 1. Digital Tag8 = 0 (Last known status 'Not Comm')
-     * 2. Digital LastSeen <= NOW - 1 Hour (Stale)
-     * 3. Analog NO DATA in last 24 Hours (Dead)
-     * 4. Digital LastSeen >= NOW - 1440 Hours (Not Discontinued)
+     * 1. Digital LastSeen <= NOW - 1 Hour (Stale)
+     * 2. Digital LastSeen >= NOW - 1440 Hours (Not Discontinued/Decommissioned)
+     * 3. Analog NO DATA in last 24 Hours (No recent activity on other channels)
      */
     async detect() {
         try {
@@ -27,22 +26,16 @@ export class CommFailService {
                     r.description, 
                     d.datetimefield as LastSeen
                 FROM dbo.DIGITALSPOTDATA d WITH (NOLOCK)
-                INNER JOIN dbo.ANALOGSPOTDATA a WITH (NOLOCK) ON a.DATETIMEFIELD = d.DATETIMEFIELD 
-                    AND a.RTUNUMBER = d.RTUNUMBER 
-                    AND a.CLIENTID = d.CLIENTID    
-                INNER JOIN dbo.SLCMappings s WITH (NOLOCK) ON s.CLIENTID = d.CLIENTID 
-                    AND d.RTUNUMBER = s.RTUNUMBER
                 INNER JOIN dbo.rtumaster r WITH (NOLOCK) ON d.CLIENTID = r.CLIENTID 
                     AND d.RTUNUMBER = r.RTUNUMBER
-                INNER JOIN dbo.lamptypemaster t WITH (NOLOCK) ON d.CLIENTID = t.CLIENTID 
-                    AND s.lamptypeid = t.lamptypeid
                 WHERE d.ClientID = @clientId
                 AND d.datetimefield <= DATEADD(HOUR, -1, GETDATE())
+                AND d.datetimefield >= DATEADD(HOUR, -1440, GETDATE())
                 AND d.RTUNUMBER NOT IN (
                     SELECT RTUNUMBER 
                     FROM dbo.ANALOGSPOTDATA WITH (NOLOCK)
                     WHERE ClientID = @clientId 
-                    AND datetimefield <= DATEADD(HOUR, -1440, GETDATE())
+                    AND datetimefield >= DATEADD(HOUR, -24, GETDATE())
                 )
                 ORDER BY d.datetimefield DESC
             `;
@@ -57,7 +50,7 @@ export class CommFailService {
                 type: 'COMMUNICATION_FAIL',
                 tag: 'Tag8',
                 val: 0,
-                description: row.description || 'Panel Not Communicating',
+                description: 'Panel Not Communicating',
                 time: row.LastSeen
             }));
 

@@ -3,7 +3,7 @@
         "dryRun": false,
         "isDevelopment": false,
         "oneTimeCatchUp": false,
-        "systemUserEmail": "system@example.com"
+        "systemUserEmail": "sync@fixsmart.dev"
     },
     "syncRules": {
         "batchSize": 5000,
@@ -15,7 +15,6 @@
         "defaultPriority": "HIGH",
         "defaultStatus": "REGISTERED",
         "defaults": {
-            "submittedById": "cmlg94vq900513lzts6406r7i",
             "slaStatus": "ON_TIME",
             "isAnonymous": false,
             "contactPhone": "9876543210"

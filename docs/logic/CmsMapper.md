@@ -4,6 +4,7 @@
 The `CMS Mapper` bridges the gap between the internal representation of a "Fault" and the specific database schema required by the **Urban Voice CMS**. It handles complex tasks like generating human-readable titles, calculating SLAs (Service Level Agreements), and resolving foreign key relationships (e.g., Complaint Type IDs).
 
 ## Responsibilities
+- **System User Resolution**: Dynamically resolves the technical user ID from the `SystemConfig` email address using `resolveSystemUser`.
 - **ID Generation**: Generates sequential, human-readable IDs (e.g., `KMC00033`).
 - **Type Mapping**: Translates raw fault types (`POWER_FAIL`) into formal CMS types (`Unavailability of incoming power supply`) based on configuration.
 - **SLA Calculation**: Calculates the `deadline` based on the `slaHours` defined for each complaint type in the target database.
@@ -13,6 +14,7 @@ The `CMS Mapper` bridges the gap between the internal representation of a "Fault
 ## Flow Explanation
 1.  **Fault Input**: Receives a standardized fault object from the Rule Engine.
 2.  **External Lookups**:
+    - Calls `resolveSystemUser()` to get the current system user ID by email.
     - Calls `generateComplaintId()` to get the next sequential ID.
     - Calls `resolveComplaintType()` to find the matching integer ID for the complaint category in the PostgreSQL database.
 3.  **String Templating**: Builds a multi-line `description` containing the detailed fault report (Type, Value, Tag, Time).

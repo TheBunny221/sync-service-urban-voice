@@ -1,5 +1,5 @@
 
-
+import { v2Logger } from '../logger.js';
 
 /**
  * Generates a unique Complaint ID following the CMS pattern (Prefix + Sequential Number).
@@ -55,9 +55,36 @@ export async function generateComplaintId(tx) {
         }
     }
 
-    // 3. Format
-    const formattedNumber = nextNumber.toString().padStart(idLength, "0");
-    return `${prefix}${formattedNumber}`;
+    // 3. Format & Verify Uniqueness (Loop to prevent collisions)
+    let formattedNumber;
+    let newId;
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 20) {
+        attempts++;
+        formattedNumber = nextNumber.toString().padStart(idLength, "0");
+        newId = `${prefix}${formattedNumber}`;
+
+        // Verify it doesn't exist (Critical for race conditions or sort anomalies)
+        const check = await tx.complaint.findUnique({
+            where: { complaintId: newId },
+            select: { id: true }
+        });
+
+        if (!check) {
+            isUnique = true;
+        } else {
+            // Collision detected (or sort issue), force increment
+            nextNumber++;
+        }
+    }
+
+    if (!isUnique) {
+        throw new Error(`Failed to generate unique Complaint ID after ${attempts} attempts`);
+    }
+
+    return newId;
 }
 
 /**
@@ -71,6 +98,7 @@ export async function resolveComplaintType(tx, typeInput) {
     let resolvedTypeId = null;
     let resolvedTypeName = null;
     let resolvedSlaHours = 48; // Default
+    let resolvedPriority = 'MEDIUM'; // Default
 
     const inputStr = String(typeInput || "").trim();
     if (!inputStr) return null;
@@ -85,6 +113,7 @@ export async function resolveComplaintType(tx, typeInput) {
         resolvedTypeId = ct.id;
         resolvedTypeName = ct.name;
         resolvedSlaHours = Number(ct.slaHours) || 48;
+        resolvedPriority = ct.priority || 'MEDIUM';
     } else {
         // 2. Legacy SystemConfig Lookup (COMPLAINT_TYPE_KEY)
         const byKey = await tx.systemConfig.findFirst({
@@ -99,6 +128,7 @@ export async function resolveComplaintType(tx, typeInput) {
                 const v = JSON.parse(byKey.value || "{}");
                 resolvedTypeName = v.name;
                 resolvedSlaHours = Number(v.slaHours);
+                resolvedPriority = v.priority || 'MEDIUM';
             } catch (e) {
                 // Ignore parse error
             }
@@ -115,6 +145,7 @@ export async function resolveComplaintType(tx, typeInput) {
                     if (v.name && v.name.toLowerCase() === inputStr.toLowerCase()) {
                         resolvedTypeName = v.name;
                         resolvedSlaHours = Number(v.slaHours);
+                        resolvedPriority = v.priority || 'MEDIUM';
                         break;
                     }
                 } catch (e) { }
@@ -127,6 +158,28 @@ export async function resolveComplaintType(tx, typeInput) {
     return {
         id: resolvedTypeId,
         name: resolvedTypeName,
-        slaHours: resolvedSlaHours // In case we need it for deadline
+        slaHours: resolvedSlaHours,
+        priority: resolvedPriority
     };
+}
+
+/**
+ * Resolves the System User ID by Email.
+ * @param {Object} tx - Prisma Transaction
+ * @param {string} email - Email to look up
+ * @returns {Promise<string>} - The User ID
+ */
+export async function resolveSystemUser(tx, email) {
+    if (!email) throw new Error("System User Email not configured.");
+
+    const user = await tx.user.findFirst({
+        where: { email: email.trim() },
+        select: { id: true }
+    });
+
+    if (!user) {
+        throw new Error(`System User not found for email: ${email}`);
+    }
+
+    return user.id;
 }

@@ -1,6 +1,6 @@
 
 import crypto from 'crypto';
-import { generateComplaintId, resolveComplaintType } from './utils/cmsIntegration.js';
+import { generateComplaintId, resolveComplaintType, resolveSystemUser } from './utils/cmsIntegration.js';
 import { getConfig } from './config/configLoader.js';
 
 export async function mapToCmsPayload(fault, tx) {
@@ -10,7 +10,8 @@ export async function mapToCmsPayload(fault, tx) {
     const defaults = mapping.defaults || {};
     const typeMap = mapping.complaintTypeMap || {};
 
-
+    // Resolve System User (Dynamic Lookup)
+    const submittedById = await resolveSystemUser(tx, config.service.systemUserEmail);
 
     // 1. Generate ID using CMS Logic
     // tx is required for DB lookup
@@ -27,24 +28,38 @@ export async function mapToCmsPayload(fault, tx) {
     // 3. Map Priority
     let priority = mapping.defaultPriority || 'MEDIUM'; // Default from config
     const typeVal = fault.faultType;
-    if (typeVal === 'POWER_FAIL' || typeVal === 'SINGLE_PHASE_TRIP' || typeVal === 'THREE_PHASE_TRIP') {
-        priority = 'HIGH';
-    } else if (typeVal === 'LAMP_FAILURE') {
-        priority = 'MEDIUM';
-    } else if (typeVal === 'COMMUNICATION_FAIL') {
-        priority = 'LOW';
+
+    if (resolvedType && resolvedType.priority) {
+        priority = resolvedType.priority;
+    } else {
+        // Fallback (only if DB type not found)
+        if (typeVal === 'POWER_FAIL' || typeVal === 'SINGLE_PHASE_TRIP' || typeVal === 'THREE_PHASE_TRIP') {
+            priority = 'HIGH';
+        } else if (typeVal === 'LAMP_FAILURE') {
+            priority = 'MEDIUM';
+        } else if (typeVal === 'COMMUNICATION_FAIL') {
+            priority = 'LOW';
+        }
     }
 
     const displayedType = typeName || typeVal; // Use Mapped Name if available
 
-    // 4. Construct Value for Description (only include available data)
-    const descParts = ['Detailed Fault Report:'];
-    if (displayedType) descParts.push(`Type: ${displayedType}`);
-    if (fault.value !== null && fault.value !== undefined) descParts.push(`Value: ${fault.value}`);
-    if (fault.tag) descParts.push(`Tag: ${fault.tag}`);
-    if (fault.detectedAt) descParts.push(`Time: ${fault.detectedAt}`);
-    if (fault.failurePercent !== null && fault.failurePercent !== undefined) descParts.push(`Failure%: ${fault.failurePercent}`);
-    const description = descParts.join('\n');
+    // 4. Construct user-friendly description (fault detail first, no labels)
+    const descParts = [];
+    descParts.push(fault.description || displayedType || typeVal);
+    if (fault.rtuNumber) descParts.push(`RTU-${fault.rtuNumber}`);
+    if (!fault.description && fault.failurePercent !== null && fault.failurePercent !== undefined) {
+        descParts.push(`${fault.failurePercent}% fixtures down`);
+    }
+    if (fault.detectedAt) {
+        const istTime = new Date(fault.detectedAt).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        descParts.push(`Detected: ${istTime} IST`);
+    }
+    const description = descParts.join(', ');
 
     // 5. Construct Payload (Prisma Insert Input)
     // Matches PostgreSQL `complaints` table schema
@@ -56,9 +71,7 @@ export async function mapToCmsPayload(fault, tx) {
         complaintTypeId: resolvedType ? resolvedType.id : undefined,
 
 
-        title: `Fault Captured: ${displayedType} (${fault.tag})`
-            .replace('{{Description}}', displayedType)
-            .replace('{{TagNumber}}', fault.tag),
+        title: `${displayedType} – Auto Detected`,
         description: description,
 
         type: resolvedType ? resolvedType.name : typeName, // "Lamp Failures", etc.
@@ -78,7 +91,7 @@ export async function mapToCmsPayload(fault, tx) {
         isAnonymous: defaults.isAnonymous || false,
 
         // User Refs
-        submittedById: defaults.submittedById,
+        submittedById: submittedById,
 
         // Location Defaults
         wardId: defaults.wardId || null,

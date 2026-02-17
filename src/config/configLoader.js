@@ -14,7 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const configSchema = z.object({
     service: z.object({
         schedule: z.string().default('*/5 * * * *'),
-        systemUserEmail: z.string().optional(),
+        systemUserEmail: z.string().email(), // Required for dynamic lookup
         dryRun: z.boolean().default(false),
         isDevelopment: z.boolean().default(false),
         oneTimeCatchUp: z.boolean().default(false),
@@ -43,7 +43,7 @@ const configSchema = z.object({
         defaultPriority: z.string(),
         defaultStatus: z.string(),
         defaults: z.object({
-            submittedById: z.string(),
+            submittedById: z.string().optional(), // Now dynamic
             slaStatus: z.string().optional(),
             isAnonymous: z.boolean().optional(),
             wardId: z.string().nullable().optional(),

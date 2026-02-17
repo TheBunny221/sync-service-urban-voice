@@ -64,7 +64,7 @@ export class TripService {
                         type: 'SINGLE_PHASE_TRIP',
                         tag: 'Tag7',
                         val: 1,
-                        description: 'Single Phase Trip',
+                        description: 'Single Phase Circuit Trip',
                         time: row.DateTimeField
                     });
                 }
@@ -76,7 +76,7 @@ export class TripService {
                         type: 'THREE_PHASE_TRIP',
                         tag: 'Tag9',
                         val: 1,
-                        description: 'Three Phase Trip',
+                        description: 'Three Phase Circuit Trip',
                         time: row.DateTimeField
                     });
                 }
